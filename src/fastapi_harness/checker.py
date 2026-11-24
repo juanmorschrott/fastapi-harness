@@ -81,9 +81,14 @@ class Checker:
         env["PYTHONPATH"] = os.pathsep.join(
             [str(source), *([env["PYTHONPATH"]] if env.get("PYTHONPATH") else [])]
         )
+        env["MYPYPATH"] = os.pathsep.join(
+            [str(source), *([env["MYPYPATH"]] if env.get("MYPYPATH") else [])]
+        )
         with tempfile.TemporaryDirectory(prefix="fastapi-harness-") as directory:
             config_file = Path(directory) / ".importlinter"
             config_file.write_text(contract, encoding="utf-8")
+            mypy_config = Path(directory) / "mypy.ini"
+            mypy_config.write_text("[mypy]\n", encoding="utf-8")
             commands = [
                 ["lint-imports", str(config_file)],
                 [
@@ -92,6 +97,15 @@ class Checker:
                     "--max-average", self.config.quality.max_average,
                     str(source / self.config.package),
                 ],
+                [
+                    "mypy", "--config-file", str(mypy_config), "--strict", "--no-incremental",
+                    str(source / self.config.package),
+                ],
+                [
+                    "ruff", "check", "--isolated", "--select", "E,F",
+                    str(source / self.config.package),
+                ],
+                ["ruff", "format", "--isolated", "--check", str(source / self.config.package)],
             ]
             failed = False
             for command in commands:

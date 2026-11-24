@@ -33,7 +33,7 @@ class CLI:
         init.add_argument("--source", help="Directory containing the Python package")
         init.add_argument("--modules", nargs="*", help="Module names (default: discover)")
         init.add_argument("--dry-run", action="store_true")
-        check = commands.add_parser("check", help="Check architecture and complexity")
+        check = commands.add_parser("check", help="Check architecture, complexity, types and style")
         check.add_argument("--path", type=Path, default=Path.cwd())
         return parser.parse_args(arguments)
 

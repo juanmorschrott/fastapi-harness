@@ -15,7 +15,16 @@
   explicitly. Roll back failed operations.
 - Match sync/async to the database driver. Do not call blocking I/O directly
   from async code. Avoid CPU-intensive work on the event loop.
+- Annotate function parameters and returns; satisfy `mypy --strict`. Use
+  `ruff check` and `ruff format` to meet the harness style checks.
 - Add focused tests for behavior and failures. Avoid speculative abstractions.
+
+## Observability
+
+Consider OpenTelemetry tracing and structured logging when the application's
+requirements call for them. Do not expose secrets or sensitive data in logs
+or spans. Agree on instrumentation, exporters and tests with the project team.
+The harness does not install or verify telemetry.
 
 ## Agent tooling
 

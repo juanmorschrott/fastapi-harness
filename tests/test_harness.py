@@ -52,6 +52,14 @@ def test_install_detects_modules_and_is_idempotent(project: Path) -> None:
     assert data["modules"] == ["orders", "users"]
     assert "MCP" in (project / "AGENTS.md").read_text()
     assert "https://modelcontextprotocol.io/" in (project / "docs/conventions.md").read_text()
+    architecture = (project / "docs/architecture.md").read_text()
+    assert "src/" in architecture
+    assert "routers/" in architecture and "repositories/" in architecture
+    assert (project / "docs/specs/00-harness.md").is_file()
+    assert "Mermaid" in (project / "docs/specs/feature-template.md").read_text()
+    assert "Do not modify files" in (
+        project / "skills/fastapi-review/SKILL.md"
+    ).read_text()
     assert cli.run(["init", "--path", str(project)]) == 0
     assert run_check(project).returncode == 0
 
@@ -90,11 +98,45 @@ def test_shared_import_fails(project: Path) -> None:
 def test_legitimate_indirect_router_dependency_passes(project: Path) -> None:
     assert CLI().run(["init", "--path", str(project)]) == 0
     module = project / "src/app/modules/users"
-    (module / "routers/route.py").write_text("import app.modules.users.services.service\n")
-    (module / "services/service.py").write_text("import app.modules.users.repositories.store\n")
+    (module / "routers/route.py").write_text(
+        "import app.modules.users.services.service\n\n"
+        "print(app.modules.users.services.service)\n"
+    )
+    (module / "services/service.py").write_text(
+        "import app.modules.users.repositories.store\n\n"
+        "print(app.modules.users.repositories.store)\n"
+    )
     (module / "repositories/store.py").write_text("")
     result = run_check(project)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    ("code", "diagnostic"),
+    [
+        ("def identity(value):\n    return value\n", "no-untyped-def"),
+        ("def identity(value: int) -> str:\n    return value\n", "return-value"),
+        ("import os\n", "F401"),
+        ("value: int=1\n", "would be reformatted"),
+    ],
+)
+def test_quality_checks_fail(project: Path, code: str, diagnostic: str) -> None:
+    assert CLI().run(["init", "--path", str(project)]) == 0
+    (project / "src/app/modules/users/services/example.py").write_text(code)
+    result = run_check(project)
+    assert result.returncode != 0
+    assert diagnostic in result.stdout + result.stderr
+
+
+def test_project_mypy_config_cannot_disable_strict_checks(project: Path) -> None:
+    assert CLI().run(["init", "--path", str(project)]) == 0
+    (project / "mypy.ini").write_text("[mypy]\ndisallow_untyped_defs = False\n")
+    (project / "src/app/modules/users/services/example.py").write_text(
+        "def identity(value):\n    return value\n"
+    )
+    result = run_check(project)
+    assert result.returncode != 0
+    assert "no-untyped-def" in result.stdout + result.stderr
 
 
 def test_complexity_fails(project: Path) -> None:

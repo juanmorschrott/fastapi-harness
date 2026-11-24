@@ -5,8 +5,11 @@ description: Implement or change a FastAPI feature using this project's modular 
 
 # Implement a feature
 
-1. Read `AGENTS.md`, the architecture and conventions, and relevant specs.
-2. Inspect existing behavior and module patterns before changing code.
-3. Keep HTTP, business logic and persistence in their respective layers.
-4. Add focused tests for new behavior and failures.
-5. Run relevant tests and `fastapi-harness check`; report failures.
+1. Read `AGENTS.md`, the architecture, conventions and relevant specs or direct
+   user requirements. Inspect existing behavior and module patterns.
+2. Identify acceptance criteria and consequential missing decisions. Ask the
+   user instead of inventing business rules, even if a Mermaid diagram exists.
+3. Implement within the established layers and register any new module.
+4. Add focused tests for specified behavior and meaningful failures.
+5. Run relevant tests and `fastapi-harness check`. Fix failures introduced by
+   the change and report results, remaining risks and anything not verified.

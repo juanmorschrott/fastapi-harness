@@ -1,0 +1,29 @@
+# Harness specification
+
+## Purpose
+
+Enable an external AI agent to implement direct requests or feature
+specifications within the project's agreed boundaries. The agent must report
+the outcome of checks and tests rather than claiming unverified compliance.
+
+## Requirements
+
+- Follow the modular monolith and layer responsibilities in
+  [architecture](../architecture.md) and the project
+  [conventions](../conventions.md).
+- Record every feature module in `harness.yaml`. Each module has `routers`,
+  `services` and `repositories` Python packages.
+- Implement requested behavior and cover acceptance criteria and important
+  failures with focused tests. Ask about consequential missing requirements.
+- Run `fastapi-harness check` and relevant tests. Resolve failures caused by
+  the change and report pre-existing failures or checks that cannot run.
+- Do not leak sensitive information in responses, logs, traces or external
+  tools. Add observability only as required by the project.
+
+## Verification
+
+`fastapi-harness check` validates the configured layout, static import
+contracts, cyclomatic complexity, strict MyPy typing, Ruff E and F lint rules,
+and Ruff formatting for the application package. It does not execute tests,
+validate every FastAPI practice or verify OpenTelemetry. Review those aspects
+and run relevant tests separately.

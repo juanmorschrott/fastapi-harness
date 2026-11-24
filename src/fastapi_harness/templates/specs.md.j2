@@ -1,4 +1,10 @@
 # Feature specifications
 
-Place concise feature specifications here when needed. Describe observable
-behavior, important edge cases and acceptance criteria; avoid speculative design.
+The [harness specification](00-harness.md) defines project-wide constraints.
+Copy [feature-template.md](feature-template.md) to create a feature spec;
+keep the template itself unchanged. Direct user requests can also define work.
+
+Describe observable behavior, edge cases and testable acceptance criteria.
+An entity-relationship diagram, including Mermaid, describes structure but
+does not determine API behavior, persistence, authorization or deletion rules.
+State those decisions explicitly or ask the user before implementing them.

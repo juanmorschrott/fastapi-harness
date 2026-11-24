@@ -5,12 +5,43 @@ and contains the Python packages `routers`, `services`, and `repositories`.
 Keep modules independent by default. `main.py` composes the application.
 If present, `shared` must not depend on feature modules.
 
+## Reference layout
+
+The following is an illustrative `tree` output, not generated application
+code. Replace `example` with a feature name and add modules as needed.
+`shared` is optional.
+
+```text
+{{ config.source }}/
+└── {{ config.package }}/
+    ├── __init__.py
+    ├── main.py
+    ├── modules/
+    │   ├── __init__.py
+    │   └── example/
+    │       ├── __init__.py
+    │       ├── routers/
+    │       │   ├── __init__.py
+    │       │   └── router.py
+    │       ├── services/
+    │       │   ├── __init__.py
+    │       │   └── example_service.py
+    │       └── repositories/
+    │           ├── __init__.py
+    │           └── example_repository.py
+    └── shared/
+        └── __init__.py
+```
+
+## Boundaries
+
 Dependencies flow from routers to services to repositories. Routers must not
 import repositories directly. Keep HTTP handling in routers, business rules in
 services, and database access in repositories. Do not introduce a hexagonal
 architecture, generic base repositories, interfaces or factories without a
 specific, documented need. Prefer the simplest design that solves the problem.
 
-Register each module in `harness.yaml`. `fastapi-harness check` enforces import
-boundaries and complexity; it cannot detect every architectural violation.
+Register each module in `harness.yaml`. `fastapi-harness check` verifies the
+package layout, static import boundaries, complexity, types and style; it
+cannot detect every architectural violation or verify business behavior.
 Document and review exceptions with the team rather than bypassing checks.

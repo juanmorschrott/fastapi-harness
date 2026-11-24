@@ -1,11 +1,20 @@
 ---
 name: fastapi-review
-description: Review FastAPI changes for behavior, unnecessary complexity, layer boundaries and persistence practices.
+description: Review changes against the FastAPI harness and propose fixes without modifying files.
 ---
 
 # Review a change
 
-Read `AGENTS.md` and the referenced architecture and conventions. Review
-observable behavior, errors, transaction boundaries, blocking I/O and added
-complexity. Run appropriate tests and `fastapi-harness check` when possible.
-Distinguish verified failures from risks and report limitations.
+Review the changes identified by the user; if no scope is specified, review
+the current changes. Do not modify files unless the user separately asks for
+fixes. Read `AGENTS.md`, the architecture, conventions and relevant specs.
+
+Inspect behavior, error handling, layer boundaries, transactions, blocking I/O,
+tests, observability requirements and unnecessary complexity. Run
+`fastapi-harness check` and relevant tests when possible.
+
+Report a prioritized list of actionable findings with file locations, the
+violated requirement or risk, impact and suggested correction. Distinguish
+verified failures from potential risks. State which checks ran, their results
+and any limitations; do not claim compliance for unverified requirements.
+If there are no findings, say so and report remaining verification gaps.
