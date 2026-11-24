@@ -9,6 +9,7 @@ import yaml
 
 from fastapi_harness.cli import CLI
 from fastapi_harness.config import HarnessConfig
+from fastapi_harness.installer import Installer
 
 
 @pytest.fixture
@@ -87,6 +88,32 @@ def test_generated_guidance_links_resolve(project: Path) -> None:
         for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
             if not target.startswith(("https://", "http://", "#")):
                 assert (path.parent / target).is_file(), (path, target)
+
+
+def test_architecture_describes_configured_domains_as_snapshot(project: Path) -> None:
+    config = HarnessConfig(package="app", source="src", modules=["users", "orders"])
+    architecture = Installer(project, config).render()["docs/architecture.md"]
+    assert "`users`, `orders`" in architecture
+    assert "installation-time snapshot" in architecture
+    assert "not the detected project tree" in architecture
+
+    empty = Installer(project, HarnessConfig(package="app")).render()["docs/architecture.md"]
+    assert "No domain packages were registered" in empty
+
+
+def test_example_spec_is_installed_without_overwriting_existing_file(project: Path) -> None:
+    example = project / "docs/specs/example-crud.md"
+    example.parent.mkdir(parents=True)
+    example.write_text("Existing specification")
+    assert CLI().run(["init", "--path", str(project)]) == 1
+    assert example.read_text() == "Existing specification"
+    assert not (project / "harness.yaml").exists()
+
+    example.unlink()
+    assert CLI().run(["init", "--path", str(project)]) == 0
+    assert "Illustrative only" in example.read_text()
+    assert "erDiagram" in example.read_text()
+    assert "not a requirement" in (project / "docs/specs/README.md").read_text()
 
 
 def test_cross_domain_imports_pass(project: Path) -> None:

@@ -1,0 +1,58 @@
+# Example specification: Inventory items
+
+> Illustrative only. This is not a requirement for the application.
+> Copy the [feature template](feature-template.md) for a real feature.
+
+## Goal
+
+Provide a REST API to manage inventory items and their categories.
+
+## Data model
+
+```mermaid
+erDiagram
+    CATEGORY ||--o{ ITEM : contains
+    CATEGORY {
+        int id PK
+        string name
+    }
+    ITEM {
+        int id PK
+        string name
+        int category_id FK
+    }
+```
+
+In this example, names must be 1 to 100 characters long after trimming and
+must not be blank.
+Categories are pre-existing, every item belongs to exactly one category, and
+item names need not be unique. Deleting a category with items is out of scope.
+
+## API contract
+
+All item responses contain `id`, `name` and `category_id`. Identifiers are
+positive integers. The API does not require authentication in this example.
+
+| Method and path | Behavior | Success |
+| --- | --- | --- |
+| `POST /items` | Create an item from `name` and `category_id` | 201 with item |
+| `GET /items` | List all items, ordered by ascending ID | 200 with a JSON array |
+| `GET /items/{item_id}` | Retrieve an item | 200 with item |
+| `PUT /items/{item_id}` | Replace an item's name and category | 200 with item |
+| `DELETE /items/{item_id}` | Delete an item | 204 with no body |
+
+POST and PUT require both fields; unknown fields are rejected. Invalid input
+returns 422. A missing item or category returns 404. Operations are persisted
+in the application's database; create, update and delete are transactional.
+
+## Acceptance criteria
+
+- Creating an item in an existing category returns 201 and a subsequent GET
+  returns the same data.
+- Listing items returns an empty array when none exist and orders results by ID.
+- Updating an item changes both fields; deleting it makes a subsequent GET
+  return 404.
+- An unknown item or category returns 404; an invalid name, ID, missing field
+  or unexpected field returns 422.
+- Tests cover each operation, invalid input and missing resources. Run those
+  tests and `fastapi-harness check`, and report their actual results.

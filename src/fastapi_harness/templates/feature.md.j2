@@ -7,11 +7,13 @@ description: Implement or change a FastAPI feature using this project's domain-o
 
 1. Read `AGENTS.md`, the architecture, conventions and relevant specs or direct
    user requirements. Inspect existing behavior and module patterns.
-2. Identify acceptance criteria and consequential missing decisions. Ask the
-   user instead of inventing business rules, even if a Mermaid diagram exists.
+2. Extract observable requirements, error cases and acceptance criteria.
+   Treat Mermaid diagrams as data structure, not a complete API contract.
+   Ask the user about consequential missing decisions instead of inventing
+   business rules. Do not treat illustrative specs as requirements.
 3. Implement within the relevant domain and register any new domain package.
 4. Add focused tests for specified behavior and meaningful failures.
 5. Run relevant tests and `fastapi-harness check`. Fix failures introduced by
    the change and report results, remaining risks and anything not verified.
-6. Summarize the behavior changed, checks and tests run, and any unresolved
-   decisions or follow-up work.
+6. Report the behavior changed, checks and tests with their actual results,
+   unresolved decisions, risks and anything not verified.

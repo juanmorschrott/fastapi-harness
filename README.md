@@ -134,6 +134,8 @@ Copy `docs/specs/feature-template.md` in your target project and describe the
 feature's observable behavior, edge cases, and acceptance criteria. For
 example, a CRUD specification might include an entity diagram alongside the
 endpoint contracts, validation rules, and error responses.
+The generated `docs/specs/example-crud.md` illustrates this format; it is not
+a requirement to implement.
 
 An entity-relationship diagram, including Mermaid, does **not** define API
 behavior, persistence, authorization, or deletion rules by itself. State those

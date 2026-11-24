@@ -2,8 +2,27 @@
 
 Organize the application as a modular monolith by domain. Keep related API,
 validation, persistence and business logic together. Application-wide
-configuration and composition live at the package root. The following is an
-illustrative layout; the harness does not create application code.
+configuration and composition live at the package root.
+
+## Project configuration
+
+| Setting | Value |
+| --- | --- |
+| Source directory | `{{ config.source }}` |
+| Application package | `{{ config.package }}` |
+
+{% if config.modules %}At installation, the following domain packages were registered in
+`harness.yaml`: {% for module in config.modules %}`{{ module }}`{% if not loop.last %}, {% endif %}{% endfor %}.
+{% else %}No domain packages were registered at installation. Add them to
+`harness.yaml` before running `fastapi-harness check`.
+{% endif %}
+This is an installation-time snapshot, not an inventory of current files.
+Consult `harness.yaml` for the current configuration.
+
+## Reference layout
+
+The following is an illustrative layout, not the detected project tree.
+The harness does not create application code.
 
 ```text
 {{ config.source }}/
@@ -20,6 +39,16 @@ illustrative layout; the harness does not create application code.
         ├── service.py
         └── config.py
 ```
+
+## Responsibilities
+
+| Component | Responsibility |
+| --- | --- |
+| `main.py` | Compose the FastAPI application and register routers |
+| `router.py` and `dependencies.py` | Handle HTTP and request-scoped concerns |
+| `schemas.py` | Define and validate API inputs and outputs |
+| `service.py` | Coordinate business rules and use cases |
+| `models.py` | Define persistence models when needed |
 
 Add files only when needed. A domain can import another domain explicitly;
 avoid circular imports. Keep request handling in routers, business logic in

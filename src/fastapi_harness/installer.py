@@ -15,6 +15,7 @@ class Installer:
         "docs/specs/README.md": "specs.md.j2",
         "docs/specs/00-harness.md": "harness-spec.md.j2",
         "docs/specs/feature-template.md": "spec-template.md.j2",
+        "docs/specs/example-crud.md": "spec-example.md.j2",
         "skills/fastapi-feature/SKILL.md": "feature.md.j2",
         "skills/fastapi-review/SKILL.md": "review.md.j2",
     }

@@ -1,5 +1,20 @@
 # FastAPI and Python conventions
 
+## At a glance
+
+| Area | Project convention | Verification |
+| --- | --- | --- |
+| Structure | Register every top-level domain package | Automated layout check |
+| Types | Annotate code and satisfy strict MyPy | Automated |
+| Style | Follow the selected Ruff rules and formatting | Automated |
+| Complexity | Stay within the configured Xenon limits | Automated |
+| API, persistence and concurrency | Follow the conventions below | Agent review and relevant tests |
+| Observability | Instrument when the project requires it | Agent review and relevant tests |
+
+The automated checks do not prove full compliance. Recommendations marked
+as conditional below apply only when the corresponding technology or
+requirement is present.
+
 ## Python and API design
 
 - Use Pydantic for request and response validation. Keep routes thin and do not
