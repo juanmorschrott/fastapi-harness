@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fastapi-harness"
+version = "0.1.0"
+description = "An opinionated, agent-independent harness for FastAPI projects."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.7,<3",
+  "jinja2>=3.1,<4",
+  "PyYAML>=6,<7",
+  "import-linter>=2.17,<3",
+  "xenon>=0.9,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.8"]
+
+[project.scripts]
+fastapi-harness = "fastapi_harness.cli:main"
+
+[project.urls]
+Repository = "https://github.com/juanmorschrott/fastapi-harness"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastapi_harness"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.importlinter]
+root_package = "fastapi_harness"
+
+[[tool.importlinter.contracts]]
+name = "CLI depends on implementation, which depends on configuration"
+type = "layers"
+layers = [
+  "fastapi_harness.cli",
+  "fastapi_harness.checker | fastapi_harness.installer",
+  "fastapi_harness.config",
+]

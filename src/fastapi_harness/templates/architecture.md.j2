@@ -1,0 +1,16 @@
+# Architecture
+
+Use a modular monolith. Each feature lives in `{{ config.package }}.modules`
+and contains the Python packages `routers`, `services`, and `repositories`.
+Keep modules independent by default. `main.py` composes the application.
+If present, `shared` must not depend on feature modules.
+
+Dependencies flow from routers to services to repositories. Routers must not
+import repositories directly. Keep HTTP handling in routers, business rules in
+services, and database access in repositories. Do not introduce a hexagonal
+architecture, generic base repositories, interfaces or factories without a
+specific, documented need. Prefer the simplest design that solves the problem.
+
+Register each module in `harness.yaml`. `fastapi-harness check` enforces import
+boundaries and complexity; it cannot detect every architectural violation.
+Document and review exceptions with the team rather than bypassing checks.
