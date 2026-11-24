@@ -1,92 +1,167 @@
-# fastapi-harness
+# FastAPI Harness
 
-An opinionated, agent-independent harness for FastAPI projects. It installs
-instructions, specifications and quality checks for an AI agent implementing
-features in a simple three-layer modular monolith. The agent runs in your
-chosen external tool; the harness does not invoke or orchestrate agents.
-This package is not the FastAPI CLI and does not change application code.
+**Give your AI agent the context and guardrails to build consistent FastAPI
+applications.**
 
-This is an early first approach, intended primarily for new projects. Applications
-must already use the
-configured module layout for architecture checks to pass; the harness does not
-create or migrate application code automatically.
+[![CI](https://github.com/juanmorschrott/fastapi-harness/actions/workflows/checks.yml/badge.svg)](https://github.com/juanmorschrott/fastapi-harness/actions/workflows/checks.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## Installation
+FastAPI Harness installs an opinionated set of instructions, specifications,
+and automated checks into your project. Describe a feature directly or in a
+specification, then let your preferred AI agent implement it within a defined
+architecture.
 
-Install the CLI with [uv](https://docs.astral.sh/uv/) from a local checkout:
+> **Early-stage project:** designed primarily for new FastAPI applications.
+> The harness does not generate application code, migrate existing projects,
+> invoke agents, or replace human review.
+
+## How it works
+
+```text
+Your requirements
+        |
+        v
+  Direct request or spec  -->  External AI agent  -->  Implementation
+                                   |                       |
+                                   v                       v
+                          Harness instructions       Automated checks
+```
+
+1. **Install the harness** into a project that follows the expected layout.
+2. **Describe the feature** in a Markdown specification or a direct request.
+3. **Ask your agent to implement it**, pointing it to `AGENTS.md` and the
+   relevant requirements.
+4. **Verify the result** with `fastapi-harness check` and your project's tests.
+   Ask the agent to report failures and anything it could not verify.
+
+## Quick start
+
+### 1. Install
+
+From a local checkout, install the CLI with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv tool install .
 ```
 
-Once the package is published, it can also be run with
-`uvx fastapi-harness init`. For reproducible CI, pin a released harness version
-as a development dependency in the target project.
+Alternatively, run `pip install .` from the checkout to install into the active
+Python environment. For checks that need your application's dependencies,
+prefer installing the harness in the project's environment: an isolated
+`uv tool` environment does not automatically include those dependencies.
 
-The package also supports standard Python tooling: `pip install .` installs it
-into the active Python environment.
+Once published, the CLI can also be run with `uvx fastapi-harness init`. For
+reproducible CI, pin a released harness version as a development dependency.
 
-## Usage
+### 2. Prepare your project
 
-Run from the target project's root:
+The harness expects a Python package with at least one feature module. Each
+feature has three Python packages:
 
-```bash
-fastapi-harness init --dry-run
-fastapi-harness init
-fastapi-harness check
+```text
+src/
+└── app/
+    ├── __init__.py
+    └── modules/
+        ├── __init__.py
+        └── users/
+            ├── __init__.py
+            ├── routers/
+            │   └── __init__.py
+            ├── services/
+            │   └── __init__.py
+            └── repositories/
+                └── __init__.py
 ```
 
-`init` discovers a single top-level package in `src/` (or the current
-directory). If detection is ambiguous, specify `--package app --source src`.
-Modules are discovered under `app/modules/`; specify `--modules users orders`
-to select them explicitly. Installation will not overwrite different files.
-Identical files are left untouched. Resolve conflicts manually before retrying.
-Existing projects are never reorganized automatically.
+This is an example, not generated application code. The generated architecture
+document includes a more detailed reference tree and layer responsibilities.
 
-Create the application package and its initial module first, or explicitly pass
-`--package` and add the layout before checking. The generated
-`docs/architecture.md` contains a reference tree. Add feature requirements
-under `docs/specs/`, using `docs/specs/feature-template.md` as a starting
-point, or give the agent requirements directly. A Mermaid entity diagram does
-not replace decisions about API behavior, persistence or authorization.
-The installer does not update existing harness files: if a newer version's
-templates differ, review and update them manually.
+### 3. Initialize and check
 
-Point your external agent at `AGENTS.md` and the relevant requirements. Ask it
-to implement the feature, run the checks and relevant tests, and report results.
-For a read-only review, ask it to follow
-`skills/fastapi-review/SKILL.md`; agents that support skill commands may expose
-this as `/fastapi-review`. Skill discovery and invocation depend on the agent.
+From the target project's root:
 
-Edit `harness.yaml` to list **all** feature packages under `app/modules`.
-Each must contain `routers`, `services` and `repositories` Python packages.
-If the existing project differs, migrate it deliberately before running
-`check`. A missing module list or missing layers is an error, not a pass.
-Use `--path` to select another project directory.
+```bash
+fastapi-harness init --dry-run  # Preview files
+fastapi-harness init            # Install guidance
+fastapi-harness check           # Run automated guardrails
+```
 
-`check` runs import-linter, Xenon, MyPy in strict mode, and Ruff lint (E and F
-rules) and format checks on the application package. All checks are
-mandatory; adding the harness to an existing project can therefore introduce
-new failures. It returns a nonzero exit code if any check fails. MyPy and Ruff
-use harness-owned settings rather than the project's tool configuration;
-Ruff's defaults include an 88-character line length. Tools may not detect every
-violation, and inline suppressions can affect their results.
+`init` discovers a single top-level package in `src/` or the current directory,
+and feature packages under `app/modules/`. If detection is ambiguous, specify
+the package and source; modules can also be selected explicitly:
 
-Contract generation uses the configuration on every run; keep CI on a pinned
-harness version. Install the harness in the project's Python environment so
-MyPy can resolve application dependencies; an isolated `uv tool` environment
-does not automatically include them. Static import checks cannot detect dynamic
-imports or all architectural violations. `check` does not run tests, validate all
-FastAPI practices, or verify OpenTelemetry. No tests, telemetry or CI
-configuration are installed automatically.
+```bash
+fastapi-harness init --package app --source src --modules users orders
+```
 
-The generated `AGENTS.md` and skills use open formats, but agents vary in what
-they discover automatically. Point an agent at `AGENTS.md` if necessary.
-The guidance also covers safe use of approved
-[MCP](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro)
-servers. Installing the harness does not install or configure an MCP server.
+Use `--path` with either command to select another project directory.
+`harness.yaml` must list **all** feature packages. A missing module list,
+unlisted module, or missing layer is an error.
 
-For local development:
+**Your files are protected:** initialization does not overwrite differing
+files; it reports conflicts without writing anything. Identical files are left
+untouched. To update guidance from a newer harness version, review and update
+existing files manually.
+
+## What gets installed
+
+| File | Purpose |
+| --- | --- |
+| `AGENTS.md` | Entry point for agent instructions |
+| `docs/architecture.md` | Reference layout, layers, and boundaries |
+| `docs/conventions.md` | FastAPI, Python, and agent-tooling conventions |
+| `docs/specs/` | Harness specification and feature specification template |
+| `skills/fastapi-feature/SKILL.md` | Feature implementation workflow |
+| `skills/fastapi-review/SKILL.md` | Read-only review workflow |
+| `harness.yaml` | Package, modules, and complexity configuration |
+
+Agents differ in which instructions and skills they discover automatically.
+Point your agent to `AGENTS.md` explicitly when needed. The harness does not
+install or configure MCP servers; use only approved tools and protect secrets.
+
+## Work from a specification
+
+Copy `docs/specs/feature-template.md` in your target project and describe the
+feature's observable behavior, edge cases, and acceptance criteria. For
+example, a CRUD specification might include an entity diagram alongside the
+endpoint contracts, validation rules, and error responses.
+
+An entity-relationship diagram, including Mermaid, does **not** define API
+behavior, persistence, authorization, or deletion rules by itself. State those
+decisions explicitly or have the agent ask for clarification.
+
+To review changes without applying fixes, ask the agent to follow
+`skills/fastapi-review/SKILL.md`. Compatible agents may expose it as
+`/fastapi-review`; discovery and invocation depend on the agent.
+
+## Automated guardrails
+
+`fastapi-harness check` validates the application package:
+
+| Check | Tool | What it covers |
+| --- | --- | --- |
+| Layout and boundaries | Harness and import-linter | Required packages and static import contracts |
+| Complexity | Xenon | Configured cyclomatic complexity limits |
+| Types | MyPy | Strict type checking |
+| Style | Ruff | E and F lint rules and formatting |
+
+All checks are mandatory, and a failure produces a nonzero exit code. MyPy and
+Ruff use harness-owned settings rather than the project's tool configuration;
+Ruff's defaults include an 88-character line length. Adding the harness to an
+existing project can therefore introduce new failures.
+
+**Know the limits:** static checks cannot detect every architectural violation
+or dynamic import, and inline suppressions can affect results. `check` does not
+run tests, validate every FastAPI practice, or verify OpenTelemetry. No tests,
+telemetry, or CI configuration are installed automatically. Run relevant tests
+separately and review requirements that cannot be checked automatically.
+
+## Developing the harness
+
+This repository is a CLI package, not a FastAPI application. Its own
+architecture and import contracts differ from the guidance it generates;
+`fastapi-harness check` does not apply to its source.
 
 ```bash
 uv sync --extra dev
@@ -96,7 +171,9 @@ uv run lint-imports
 uv run xenon --max-absolute B --max-modules A --max-average A src/fastapi_harness
 ```
 
-This repository uses its own adapted agent guidance and import contracts.
-It is a CLI package, not a FastAPI application, so the generated
-router/service/repository layout and `fastapi-harness check` do not apply to
-the harness's own source code.
+See [architecture](docs/architecture.md) and [conventions](docs/conventions.md)
+for repository guidance.
+
+## License
+
+[MIT](LICENSE)
