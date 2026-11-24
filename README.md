@@ -80,7 +80,7 @@ imports or all architectural violations. `check` does not run tests, validate al
 FastAPI practices, or verify OpenTelemetry. No tests, telemetry or CI
 configuration are installed automatically.
 
-`AGENTS.md` and the included skills use open formats, but agents vary in what
+The generated `AGENTS.md` and skills use open formats, but agents vary in what
 they discover automatically. Point an agent at `AGENTS.md` if necessary.
 The guidance also covers safe use of approved
 [MCP](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro)
