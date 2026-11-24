@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -13,19 +14,7 @@ from fastapi_harness.config import HarnessConfig
 @pytest.fixture
 def project(tmp_path: Path) -> Path:
     package = tmp_path / "src" / "app"
-    for relative in (
-        "",
-        "modules",
-        "modules/users",
-        "modules/users/routers",
-        "modules/users/services",
-        "modules/users/repositories",
-        "modules/orders",
-        "modules/orders/routers",
-        "modules/orders/services",
-        "modules/orders/repositories",
-        "shared",
-    ):
+    for relative in ("", "users", "orders"):
         folder = package / relative
         folder.mkdir(parents=True, exist_ok=True)
         (folder / "__init__.py").write_text("", encoding="utf-8")
@@ -54,7 +43,7 @@ def test_install_detects_modules_and_is_idempotent(project: Path) -> None:
     assert "https://modelcontextprotocol.io/" in (project / "docs/conventions.md").read_text()
     architecture = (project / "docs/architecture.md").read_text()
     assert "src/" in architecture
-    assert "routers/" in architecture and "repositories/" in architecture
+    assert "router.py" in architecture and "schemas.py" in architecture
     assert (project / "docs/specs/00-harness.md").is_file()
     assert "Mermaid" in (project / "docs/specs/feature-template.md").read_text()
     assert "Do not modify files" in (
@@ -82,52 +71,33 @@ def test_generated_guidance_includes_fastapi_practices(project: Path) -> None:
         "thread pool",
         "durable queue",
         "versioned migrations",
-        "async test client",
+        "async HTTPX client",
     ):
         assert practice in conventions
-    assert "does not verify API semantics" in conventions
+    assert "does not verify API" in conventions
     assert "https://peps.python.org/pep-0008/" in conventions
     assert "https://fastapi.tiangolo.com/" in conventions
     assert "https://github.com/zhanymkanov/fastapi-best-practices" in conventions
     assert "migrations" in review and "background task" in review
 
 
-@pytest.mark.parametrize(
-    ("file", "code"),
-    [
-        ("users/routers/bad.py", "import app.modules.users.repositories\n"),
-        ("users/repositories/bad.py", "import app.modules.users.services\n"),
-        ("users/services/bad.py", "import app.modules.orders.services\n"),
-    ],
-)
-def test_forbidden_imports_fail(project: Path, file: str, code: str) -> None:
+def test_generated_guidance_links_resolve(project: Path) -> None:
     assert CLI().run(["init", "--path", str(project)]) == 0
-    (project / "src/app/modules" / file).write_text(code)
-    result = run_check(project)
-    assert result.returncode != 0, result.stdout + result.stderr
-    assert "BROKEN" in result.stdout
+    for path in [project / "AGENTS.md", *project.glob("docs/**/*.md")]:
+        for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
+            if not target.startswith(("https://", "http://", "#")):
+                assert (path.parent / target).is_file(), (path, target)
 
 
-def test_shared_import_fails(project: Path) -> None:
+def test_cross_domain_imports_pass(project: Path) -> None:
     assert CLI().run(["init", "--path", str(project)]) == 0
-    (project / "src/app/shared/bad.py").write_text("import app.modules.users.services\n")
-    result = run_check(project)
-    assert result.returncode != 0
-    assert "BROKEN" in result.stdout
-
-
-def test_legitimate_indirect_router_dependency_passes(project: Path) -> None:
-    assert CLI().run(["init", "--path", str(project)]) == 0
-    module = project / "src/app/modules/users"
-    (module / "routers/route.py").write_text(
-        "import app.modules.users.services.service\n\n"
-        "print(app.modules.users.services.service)\n"
+    (project / "src/app/users/service.py").write_text(
+        "from app.orders import service\n\n\n"
+        "def get_value() -> int:\n    return service.get_value()\n"
     )
-    (module / "services/service.py").write_text(
-        "import app.modules.users.repositories.store\n\n"
-        "print(app.modules.users.repositories.store)\n"
+    (project / "src/app/orders/service.py").write_text(
+        "def get_value() -> int:\n    return 1\n"
     )
-    (module / "repositories/store.py").write_text("")
     result = run_check(project)
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -143,7 +113,7 @@ def test_legitimate_indirect_router_dependency_passes(project: Path) -> None:
 )
 def test_quality_checks_fail(project: Path, code: str, diagnostic: str) -> None:
     assert CLI().run(["init", "--path", str(project)]) == 0
-    (project / "src/app/modules/users/services/example.py").write_text(code)
+    (project / "src/app/users/example.py").write_text(code)
     result = run_check(project)
     assert result.returncode != 0
     assert diagnostic in result.stdout + result.stderr
@@ -152,7 +122,7 @@ def test_quality_checks_fail(project: Path, code: str, diagnostic: str) -> None:
 def test_project_mypy_config_cannot_disable_strict_checks(project: Path) -> None:
     assert CLI().run(["init", "--path", str(project)]) == 0
     (project / "mypy.ini").write_text("[mypy]\ndisallow_untyped_defs = False\n")
-    (project / "src/app/modules/users/services/example.py").write_text(
+    (project / "src/app/users/example.py").write_text(
         "def identity(value):\n    return value\n"
     )
     result = run_check(project)
@@ -165,18 +135,10 @@ def test_complexity_fails(project: Path) -> None:
     code = "def complex_function(value):\n" + "".join(
         f"    if value == {n}: return {n}\n" for n in range(11)
     ) + "    return None\n"
-    (project / "src/app/modules/users/services/complex.py").write_text(code)
+    (project / "src/app/users/complex.py").write_text(code)
     result = run_check(project)
     assert result.returncode != 0
     assert 'has a rank of C' in result.stderr
-
-
-def test_unlisted_layer_fails(project: Path) -> None:
-    assert CLI().run(["init", "--path", str(project)]) == 0
-    (project / "src/app/modules/users/extra.py").write_text("")
-    result = run_check(project)
-    assert result.returncode != 0
-    assert "BROKEN" in result.stdout
 
 
 def test_single_module_is_supported(project: Path) -> None:
@@ -184,19 +146,17 @@ def test_single_module_is_supported(project: Path) -> None:
     data = yaml.safe_load((project / "harness.yaml").read_text())
     data["modules"] = ["users"]
     (project / "harness.yaml").write_text(yaml.safe_dump(data))
-    for path in (project / "src/app/modules/orders").rglob("*"):
+    for path in (project / "src/app/orders").rglob("*"):
         if path.is_file():
             path.unlink()
-    for name in ("routers", "services", "repositories"):
-        (project / "src/app/modules/orders" / name).rmdir()
-    (project / "src/app/modules/orders").rmdir()
+    (project / "src/app/orders").rmdir()
     result = run_check(project)
     assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_detects_new_unconfigured_module(project: Path) -> None:
     assert CLI().run(["init", "--path", str(project)]) == 0
-    new = project / "src/app/modules/new"
+    new = project / "src/app/new"
     new.mkdir()
     (new / "__init__.py").write_text("")
     result = run_check(project)
@@ -204,12 +164,23 @@ def test_detects_new_unconfigured_module(project: Path) -> None:
     assert "modules differ" in result.stderr
 
 
-def test_missing_layers_and_empty_module_list_fail(project: Path) -> None:
+def test_missing_package_and_empty_module_list_fail(project: Path) -> None:
     assert CLI().run(["init", "--path", str(project)]) == 0
-    (project / "src/app/modules/users/services/__init__.py").unlink()
-    assert "missing package" in run_check(project).stderr
-    (project / "harness.yaml").write_text("package: app\nsource: src\nmodules: []\n")
+    (project / "src/app/users/__init__.py").unlink()
+    assert "modules differ" in run_check(project).stderr
+    (project / "harness.yaml").write_text(
+        "schema_version: 2\npackage: app\nsource: src\nmodules: []\n"
+    )
     assert "at least one module" in run_check(project).stderr
+
+
+def test_legacy_config_is_rejected(project: Path) -> None:
+    (project / "harness.yaml").write_text(
+        "schema_version: 1\npackage: app\nsource: src\nmodules: [users]\n"
+    )
+    result = run_check(project)
+    assert result.returncode != 0
+    assert "migrate to the version 2 domain layout" in result.stderr
 
 
 @pytest.mark.parametrize(

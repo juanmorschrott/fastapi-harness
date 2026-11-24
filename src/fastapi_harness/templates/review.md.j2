@@ -6,16 +6,21 @@ description: Review changes against the FastAPI harness and propose fixes withou
 # Review a change
 
 Review the changes identified by the user; if no scope is specified, review
-the current changes. Do not modify files unless the user separately asks for
-fixes. Read `AGENTS.md`, the architecture, conventions and relevant specs.
+the current changes. If there are no current changes, ask the user to specify
+a scope rather than assuming a branch or commit. Do not modify files unless
+the user separately asks for fixes. Read `AGENTS.md`, the architecture,
+conventions and relevant specs.
 
 Inspect API contracts and validation, dependency boundaries, configuration and
 secrets, transactions and migrations, blocking I/O, background task
 reliability, tests, observability requirements and unnecessary complexity.
 Run `fastapi-harness check` and relevant tests when possible.
 
-Report a prioritized list of actionable findings with file locations, the
-violated requirement or risk, impact and suggested correction. Distinguish
-verified failures from potential risks. State which checks ran, their results
-and any limitations; do not claim compliance for unverified requirements.
-If there are no findings, say so and report remaining verification gaps.
+## Report
+
+1. List actionable findings by priority, including file locations, the
+   violated requirement or risk, impact and suggested correction.
+2. Distinguish verified failures from potential risks; identify checks that
+   ran, their results and any limitations.
+3. If there are no findings, say so and report remaining verification gaps.
+   Never claim compliance for unverified requirements.

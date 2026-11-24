@@ -17,7 +17,7 @@ class QualityConfig(StrictModel):
 
 
 class HarnessConfig(StrictModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2
     package: str
     source: str = "."
     modules: list[str] = Field(default_factory=list)
@@ -28,6 +28,8 @@ class HarnessConfig(StrictModel):
     def validate_version(cls, value: object) -> object:
         if type(value) is not int:
             raise ValueError("schema_version must be an integer")
+        if value != 2:
+            raise ValueError("unsupported schema_version; migrate to the version 2 domain layout")
         return value
 
     @field_validator("package")

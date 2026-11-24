@@ -33,7 +33,7 @@ class CLI:
         init.add_argument("--source", help="Directory containing the Python package")
         init.add_argument("--modules", nargs="*", help="Module names (default: discover)")
         init.add_argument("--dry-run", action="store_true")
-        check = commands.add_parser("check", help="Check architecture, complexity, types and style")
+        check = commands.add_parser("check", help="Check layout, complexity, types and style")
         check.add_argument("--path", type=Path, default=Path.cwd())
         return parser.parse_args(arguments)
 
@@ -55,7 +55,7 @@ class CLI:
             raise ValueError("source must be an existing directory inside the project")
         package = args.package or self.discover_package(source_path)
         HarnessConfig(package=package, source=source)
-        modules_dir = source_path / package / "modules"
+        modules_dir = source_path / package
         if not modules_dir.resolve().is_relative_to(args.path.resolve()):
             raise ValueError("package and modules must be inside the project")
         modules = args.modules if args.modules is not None else self.discover_modules(modules_dir)
@@ -78,7 +78,8 @@ class CLI:
             return []
         return sorted(
             path.name for path in directory.iterdir()
-            if path.is_dir() and not path.name.startswith("_") and (path / "__init__.py").is_file()
+            if path.is_dir() and not path.name.startswith((".", "_"))
+            and (path / "__init__.py").is_file()
         )
 
 

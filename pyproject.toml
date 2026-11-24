@@ -13,14 +13,13 @@ dependencies = [
   "pydantic>=2.7,<3",
   "jinja2>=3.1,<4",
   "PyYAML>=6,<7",
-  "import-linter>=2.17,<3",
   "mypy>=1.13,<2",
   "ruff>=0.8,<1",
   "xenon>=0.9,<1",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10"]
+dev = ["pytest>=8,<10", "import-linter>=2.17,<3"]
 
 [project.scripts]
 fastapi-harness = "fastapi_harness.cli:main"

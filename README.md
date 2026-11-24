@@ -12,6 +12,11 @@ and automated checks into your project. Describe a feature directly or in a
 specification, then let your preferred AI agent implement it within a defined
 architecture.
 
+Its goal is to create that harness **automatically and deterministically**:
+given the same harness version and project configuration, initialization
+renders the same guidance and reports conflicts instead of overwriting files.
+The CLI does not use an AI agent to generate the harness.
+
 This is an independent community project. It is not affiliated with or endorsed
 by FastAPI or the authors of FastAPI Best Practices.
 
@@ -58,23 +63,18 @@ reproducible CI, pin a released harness version as a development dependency.
 
 ### 2. Prepare your project
 
-The harness expects a Python package with at least one feature module. Each
-feature has three Python packages:
+The harness expects a Python package with at least one domain package:
 
 ```text
 src/
 └── app/
     ├── __init__.py
-    └── modules/
+    ├── main.py
+    └── users/
         ├── __init__.py
-        └── users/
-            ├── __init__.py
-            ├── routers/
-            │   └── __init__.py
-            ├── services/
-            │   └── __init__.py
-            └── repositories/
-                └── __init__.py
+        ├── router.py
+        ├── schemas.py
+        └── service.py
 ```
 
 This is an example, not generated application code. The generated architecture
@@ -91,7 +91,7 @@ fastapi-harness check           # Run automated guardrails
 ```
 
 `init` discovers a single top-level package in `src/` or the current directory,
-and feature packages under `app/modules/`. If detection is ambiguous, specify
+and domain packages directly under `app/`. If detection is ambiguous, specify
 the package and source; modules can also be selected explicitly:
 
 ```bash
@@ -99,13 +99,18 @@ fastapi-harness init --package app --source src --modules users orders
 ```
 
 Use `--path` with either command to select another project directory.
-`harness.yaml` must list **all** feature packages. A missing module list,
-unlisted module, or missing layer is an error.
+`harness.yaml` must list **all** direct subpackages. A missing module list or
+unlisted module is an error.
 
 **Your files are protected:** initialization does not overwrite differing
 files; it reports conflicts without writing anything. Identical files are left
 untouched. To update guidance from a newer harness version, review and update
 existing files manually.
+
+The domain-oriented layout uses configuration schema version 2. Version 1
+configurations are rejected rather than silently interpreted with new rules;
+move application code to the new layout and update `harness.yaml` and the
+generated guidance manually.
 
 ## What gets installed
 
@@ -144,7 +149,7 @@ To review changes without applying fixes, ask the agent to follow
 
 | Check | Tool | What it covers |
 | --- | --- | --- |
-| Layout and boundaries | Harness and import-linter | Required packages and static import contracts |
+| Layout | Harness | Application package and domain registration |
 | Complexity | Xenon | Configured cyclomatic complexity limits |
 | Types | MyPy | Strict type checking |
 | Style | Ruff | E and F lint rules and formatting |
@@ -156,8 +161,8 @@ existing project can therefore introduce new failures. Ruff checks selected
 style rules inspired by [PEP 8](https://peps.python.org/pep-0008/), not full
 PEP 8 compliance.
 
-**Know the limits:** static checks cannot detect every architectural violation
-or dynamic import, and inline suppressions can affect results. `check` does not
+**Know the limits:** the harness does not enforce architectural or import
+boundaries, and inline suppressions can affect results. `check` does not
 run tests, validate every FastAPI practice, or verify OpenTelemetry. No tests,
 telemetry, or CI configuration are installed automatically. Run relevant tests
 separately and review requirements that cannot be checked automatically.
