@@ -9,9 +9,10 @@ Review the changes identified by the user; if no scope is specified, review
 the current changes. Do not modify files unless the user separately asks for
 fixes. Read `AGENTS.md`, the architecture, conventions and relevant specs.
 
-Inspect behavior, error handling, layer boundaries, transactions, blocking I/O,
-tests, observability requirements and unnecessary complexity. Run
-`fastapi-harness check` and relevant tests when possible.
+Inspect API contracts and validation, dependency boundaries, configuration and
+secrets, transactions and migrations, blocking I/O, background task
+reliability, tests, observability requirements and unnecessary complexity.
+Run `fastapi-harness check` and relevant tests when possible.
 
 Report a prioritized list of actionable findings with file locations, the
 violated requirement or risk, impact and suggested correction. Distinguish

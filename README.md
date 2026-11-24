@@ -1,4 +1,4 @@
-# FastAPI Harness
+# <img src="https://cdn.simpleicons.org/fastapi/009688" alt="" width="32" height="32"> FastAPI Harness
 
 **Give your AI agent the context and guardrails to build consistent FastAPI
 applications.**
@@ -11,6 +11,9 @@ FastAPI Harness installs an opinionated set of instructions, specifications,
 and automated checks into your project. Describe a feature directly or in a
 specification, then let your preferred AI agent implement it within a defined
 architecture.
+
+This is an independent community project. It is not affiliated with or endorsed
+by FastAPI or the authors of FastAPI Best Practices.
 
 > **Early-stage project:** designed primarily for new FastAPI applications.
 > The harness does not generate application code, migrate existing projects,
@@ -149,13 +152,17 @@ To review changes without applying fixes, ask the agent to follow
 All checks are mandatory, and a failure produces a nonzero exit code. MyPy and
 Ruff use harness-owned settings rather than the project's tool configuration;
 Ruff's defaults include an 88-character line length. Adding the harness to an
-existing project can therefore introduce new failures.
+existing project can therefore introduce new failures. Ruff checks selected
+style rules inspired by [PEP 8](https://peps.python.org/pep-0008/), not full
+PEP 8 compliance.
 
 **Know the limits:** static checks cannot detect every architectural violation
 or dynamic import, and inline suppressions can affect results. `check` does not
 run tests, validate every FastAPI practice, or verify OpenTelemetry. No tests,
 telemetry, or CI configuration are installed automatically. Run relevant tests
 separately and review requirements that cannot be checked automatically.
+For framework guidance, consult the
+[official FastAPI documentation](https://fastapi.tiangolo.com/).
 
 ## Developing the harness
 
@@ -173,6 +180,14 @@ uv run xenon --max-absolute B --max-modules A --max-average A src/fastapi_harnes
 
 See [architecture](docs/architecture.md) and [conventions](docs/conventions.md)
 for repository guidance.
+
+## Acknowledgments
+
+Thanks to [Yerassyl (@zhanymkanov)](https://github.com/zhanymkanov) and the
+contributors of
+[FastAPI Best Practices](https://github.com/zhanymkanov/fastapi-best-practices)
+for sharing their experience and recommendations with the community. The
+generated conventions adapt selected ideas to this harness's architecture.
 
 ## License
 

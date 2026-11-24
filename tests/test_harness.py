@@ -71,6 +71,27 @@ def test_conflict_does_not_write_any_files(project: Path) -> None:
     assert not (project / "harness.yaml").exists()
 
 
+def test_generated_guidance_includes_fastapi_practices(project: Path) -> None:
+    assert CLI().run(["init", "--path", str(project)]) == 0
+    conventions = (project / "docs/conventions.md").read_text()
+    review = (project / "skills/fastapi-review/SKILL.md").read_text()
+    for practice in (
+        "request and response schemas",
+        "FastAPI dependencies",
+        "typed settings",
+        "thread pool",
+        "durable queue",
+        "versioned migrations",
+        "async test client",
+    ):
+        assert practice in conventions
+    assert "does not verify API semantics" in conventions
+    assert "https://peps.python.org/pep-0008/" in conventions
+    assert "https://fastapi.tiangolo.com/" in conventions
+    assert "https://github.com/zhanymkanov/fastapi-best-practices" in conventions
+    assert "migrations" in review and "background task" in review
+
+
 @pytest.mark.parametrize(
     ("file", "code"),
     [
